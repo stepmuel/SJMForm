@@ -8,7 +8,8 @@ This repository was created for my [blog post](http://heap.ch/blog/2015/12/25/sj
 
 The SJMForm class not only compiles the form markup language to HTML, it also provides some help with handling form submissions and putting data into the forms. 
 
-```php startinline
+```php
+<?php
 // allocate new form generator with form markup language
 $form = new SJMForm($fml);
 // get sanitized entered form data
