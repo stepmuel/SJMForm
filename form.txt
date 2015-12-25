@@ -1,0 +1,31 @@
+text name("Name", "Bob");
+
+password pw("Password");
+
+hidden secret("schmikret");
+
+textarea comments("Comments");
+
+checkbox skills("Coding Skills") {
+	option c("C");
+	option php("PHP", true);
+	option java("Java", true);
+};
+
+radio department("Department") {
+	option other("other", true);
+	option itet("D-ITET");
+	option infk("D-INFK");
+};
+
+select rating("Rating") {
+	option 0("0");
+	option 1("1");
+	option 2("2");
+	option 3("3");
+	option 4("4");
+	option 5("5", true);
+	option 6("6");
+	option 7("7");
+};
+
