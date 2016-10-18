@@ -19,7 +19,12 @@ require_once "SJMForm.php";
 if (isset($_POST['form'])) {
 	$in = $_POST['form'];
 	
-	$form = new SJMForm($in);
+	try {
+		$form = new SJMForm($in);
+	} catch (Exception $e) {
+		echo "<pre>Form parser error:\n".$e->getMessage();
+		exit;
+	}
 
 	$data = $form->preprocess($_POST);
 

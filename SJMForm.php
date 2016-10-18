@@ -1,66 +1,24 @@
 <?php 
 
 class SJMForm {
+	public $parser = null;
 	private $tree = array();
-	private $literals = array();
 	
-	public function __construct($fml) {
-		$this->literals['true'] = true;
-		$this->literals['false'] = false;
-		$this->literals['null'] = null;
-		$fml = $this->stringExtract($fml);
-		$this->tree = $this->parse($fml);
-		// echo json_encode($this->tree, JSON_PRETTY_PRINT);
-		// echo "<pre>".print_r($this->literals,true)."</pre>\n"; 
-		// echo "<pre>".print_r($this->tree,true)."</pre>\n"; 
-	}
-	
-	// form markup language parse functions
-	private function parse($fml) {
-		$pattern = '/(\w+)\s+(\w+)\s*\((.*?)\)\s*(\{(.*?)\}\s*)?;/s';
-		$offset = 0;
-		$tree = array();
-		while (preg_match($pattern, $fml, $m, PREG_OFFSET_CAPTURE, $offset)===1) {
-			$node = new stdClass();
-			$node->type = $m[1][0];
-			$node->name = $m[2][0];
-			$node->args = $this->arglist($m[3][0]);
-			if (isset($m[5])) $node->childNodes = $this->parse($m[5][0]);
-			$offset = $m[0][1] + strlen($m[0][0]);
-			$tree []= $node;
+	public function __construct($fml = null) {
+		// support legacy usage
+		if ($fml !== null) {
+			$this->parse($fml);
 		}
-		return $tree;
 	}
-	private function arglist($argstring) {
-		// replace placeholders with actual value
-		$args = array();
-		foreach (explode(',', $argstring) as $arg) {
-			$literal = trim($arg);
-			if (array_key_exists($literal, $this->literals)) {
-				$args []= $this->literals[$literal];
-			} elseif (is_numeric($literal)) {
-				$args []= $literal + 0; // int or float
-			} else {
-				die ("invalid literal: $literal");
-			}
+	public function parse($fml) {
+		if ($this->parser === null) {
+			require_once('SJMForm.parser.php');
+			$this->parser = new SJMFormParser();
+			// require_once('SJMForm.regex.php');
+			// $this->parser = new SJMFormRegex();
 		}
-		return $args;
-	}
-	private function stringExtract($fml) {
-		// remove comments (lines starting with #)
-		$fml = preg_replace('/^\s*#.*$/m', '', $fml);
-		// replace string literals with place holders
-		$pattern = '/"(.*?)(?<!\\\\)"/';
-		return preg_replace_callback($pattern, array($this, 'stringReplace'), $fml);
-	}
-	private function stringReplace($matches) {
-		static $n = 1;
-		// remove escape chars
-		$string = str_replace('\\"', '"', $matches[1]);
-		$key = "str$n";
-		$n += 1;
-		$this->literals[$key] = $string;
-		return $key;
+		$ast = $this->parser->parse($fml);
+		$this->tree = $ast;
 	}
 	
 	// compile form
@@ -95,12 +53,12 @@ class SJMForm {
 	
 	// set form values
 	public function set($data) {
-		foreach ($this->tree as &$node) {
+		foreach ($this->tree as $node) {
 			$type = $node->type;
 			$name = $node->name;
 			// special handling for checkboxes
 			if ($type=='checkbox') {
-				foreach ($node->childNodes as &$child) {
+				foreach ($node->childNodes as $child) {
 					$key = $name.'_'.$child->name;
 					if (!isset($data[$key])) continue;
 					$child->args[1] = $data[$key];
